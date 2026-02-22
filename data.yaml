@@ -1,0 +1,6 @@
+# data.yaml
+train: D:/object-detection(project)/dataset/images/train
+val:   D:/object-detection(project)/dataset/images/val
+
+nc: 6
+names: ['bottle', 'can', 'plastic', 'paper', 'pen', 'person','case','box']
