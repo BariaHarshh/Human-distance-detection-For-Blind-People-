@@ -3,7 +3,17 @@
     "allow": [
       "Bash(ls \"D:/object-detection\\(project\\)\")",
       "Bash(find \"D:/object-detection\\(project\\)/backend\" \"D:/object-detection\\(project\\)/frontend\" -type f)",
-      "Bash(find \"D:/object-detection\\(project\\)/backend\" \"D:/object-detection\\(project\\)/frontend\" \"D:/object-detection\\(project\\)/scripts\" -type f)"
+      "Bash(find \"D:/object-detection\\(project\\)/backend\" \"D:/object-detection\\(project\\)/frontend\" \"D:/object-detection\\(project\\)/scripts\" -type f)",
+      "Bash(ls \"D:/object-detection\\(project\\)/backend/yolov8n.pt\")",
+      "Bash(pip show:*)",
+      "Bash(pip install:*)",
+      "Bash(python app.py)",
+      "Bash(curl -s http://localhost:5000/)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //PID 7832 //F)",
+      "Bash(taskkill //PID 19832 //F)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(curl -s -X POST -F \"image=@D:/object-detection\\(project\\)/test.jpg\" http://localhost:8000/predict)"
     ]
   }
 }

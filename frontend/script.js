@@ -6,7 +6,7 @@
 // ── CONFIGURATION ───────────────────────────────────────────────────────────
 // Replace with your Render URL after deploying (no trailing slash)
 // For local testing use: "http://localhost:5000"
-const API_URL = "http://localhost:5000";
+const API_URL = "http://localhost:8000";
 
 // How often to send frames in live mode (milliseconds)
 const FRAME_INTERVAL = 500;  // 2 frames/sec (increase for faster, uses more bandwidth)
