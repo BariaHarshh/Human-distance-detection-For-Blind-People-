@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"D:/object-detection\\(project\\)\")",
+      "Bash(find \"D:/object-detection\\(project\\)/backend\" \"D:/object-detection\\(project\\)/frontend\" -type f)"
+    ]
+  }
+}

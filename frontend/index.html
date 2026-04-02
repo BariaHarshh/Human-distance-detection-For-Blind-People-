@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crowd Monitor - AI Detection System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <h1>Crowd Monitor</h1>
+            <p class="subtitle">AI-Powered Object Detection for Blind People</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+
+        <!-- Upload Section -->
+        <section class="upload-section">
+            <h2>Upload Image</h2>
+            <p class="upload-hint">Select or drag an image to detect objects and estimate distances</p>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FFC107" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <p>Click to upload or drag & drop</p>
+                <span class="file-types">JPG, PNG, WEBP</span>
+                <input type="file" id="fileInput" accept="image/*" hidden>
+            </div>
+
+            <!-- Image Preview -->
+            <div class="preview-container" id="previewContainer" style="display:none;">
+                <img id="previewImage" alt="Uploaded image preview">
+                <button class="btn-clear" id="clearBtn">Clear</button>
+            </div>
+
+            <!-- Detect Button -->
+            <button class="btn-detect" id="detectBtn" disabled>
+                <span id="btnText">Detect Objects</span>
+                <div class="spinner" id="spinner" style="display:none;"></div>
+            </button>
+        </section>
+
+        <!-- Status -->
+        <div class="status-bar" id="statusBar">
+            <span id="statusText">Ready - Upload an image to start</span>
+        </div>
+
+        <!-- Results Section -->
+        <section class="results-section" id="resultsSection" style="display:none;">
+
+            <!-- Primary Result -->
+            <div class="primary-result" id="primaryResult">
+                <div class="result-header">
+                    <h3>Closest Object</h3>
+                    <span class="badge" id="distanceBadge"></span>
+                </div>
+                <div class="result-body">
+                    <div class="result-item">
+                        <span class="result-label">Object</span>
+                        <span class="result-value" id="objectName">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Distance</span>
+                        <span class="result-value" id="objectDistance">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Direction</span>
+                        <span class="result-value" id="objectDirection">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Confidence</span>
+                        <span class="result-value" id="objectConfidence">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-panel">
+                <div class="summary-item">
+                    <span class="summary-number" id="totalObjects">0</span>
+                    <span class="summary-label">Objects Found</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-number" id="personCount">0</span>
+                    <span class="summary-label">People</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-number" id="crowdStatus">No</span>
+                    <span class="summary-label">Crowd</span>
+                </div>
+            </div>
+
+            <!-- All Objects List -->
+            <div class="all-objects" id="allObjectsPanel" style="display:none;">
+                <h3>All Detected Objects</h3>
+                <div class="objects-list" id="objectsList"></div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>Crowd Monitoring & Intruder Detection System &mdash; Built with YOLOv8 + Flask + JavaScript</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
