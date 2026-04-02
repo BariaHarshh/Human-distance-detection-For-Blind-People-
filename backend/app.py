@@ -18,7 +18,9 @@ from ultralytics import YOLO
 
 # ── App ──────────────────────────────────────────────────────────────────────
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}},
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "OPTIONS"])
 
 # ── Model ────────────────────────────────────────────────────────────────────
 print("[API] Loading YOLOv8 model...")
@@ -79,7 +81,7 @@ def detect_objects(image: np.ndarray) -> dict:
     results = model(
         image,
         imgsz=640,
-        conf=0.35,
+        conf=0.25,
         classes=CLASS_IDS,
         verbose=False,
     )[0]

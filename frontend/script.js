@@ -4,12 +4,19 @@
 // =============================================================================
 
 // ── CONFIGURATION ───────────────────────────────────────────────────────────
-// Replace with your Render URL after deploying (no trailing slash)
-// For local testing use: "http://localhost:5000"
 const API_URL = "https://real-time-object-detection-yolo-qse9.onrender.com";
 
 // How often to send frames in live mode (milliseconds)
-const FRAME_INTERVAL = 500;  // 2 frames/sec (increase for faster, uses more bandwidth)
+const FRAME_INTERVAL = 800;  // ~1.2 frames/sec (safe for Render free tier)
+
+// ── WAKE UP RENDER ON PAGE LOAD ─────────────────────────────────────────────
+// Render free tier sleeps after inactivity. Ping it immediately on load
+// so it's warm before the user clicks Start Camera.
+(function pingBackend() {
+    fetch(API_URL + "/", { method: "GET" })
+        .then(() => console.log("[API] Backend is awake."))
+        .catch(() => console.warn("[API] Backend waking up... may take 30-50s on first load."));
+})();
 
 // ── DOM ELEMENTS ────────────────────────────────────────────────────────────
 const tabCamera     = document.getElementById("tabCamera");
@@ -195,12 +202,16 @@ async function sendFrame() {
         // Convert to JPEG base64
         const dataUrl = captureCanvas.toDataURL("image/jpeg", 0.7);
 
-        // Send to backend
+        // Send to backend (60s timeout handles Render cold start)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 60000);
         const resp = await fetch(API_URL + "/predict", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ image: dataUrl }),
+            signal: controller.signal,
         });
+        clearTimeout(timeout);
 
         if (!resp.ok) throw new Error("Server error " + resp.status);
 
@@ -224,8 +235,10 @@ async function sendFrame() {
 
     } catch (err) {
         console.error("Frame error:", err);
-        if (err.message.includes("Failed to fetch")) {
-            setStatus("Cannot connect to backend. Is it running?", "error");
+        if (err.name === "AbortError") {
+            setStatus("Backend timeout - Render may be waking up. Try again in 10 seconds.", "error");
+        } else if (err.message.includes("Failed to fetch")) {
+            setStatus("Waking up backend (Render free tier)... Please wait 30s then try again.", "error");
         }
     } finally {
         isSending = false;
