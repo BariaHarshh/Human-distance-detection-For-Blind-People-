@@ -9,6 +9,7 @@
  */
 
 'use strict';
+const API_URL = "https://your-app.onrender.com";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const POLL_MS         = 600;    // poll /state every 600 ms
