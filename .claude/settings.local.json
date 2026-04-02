@@ -13,7 +13,8 @@
       "Bash(taskkill //PID 7832 //F)",
       "Bash(taskkill //PID 19832 //F)",
       "Bash(curl -s http://localhost:8000/)",
-      "Bash(curl -s -X POST -F \"image=@D:/object-detection\\(project\\)/test.jpg\" http://localhost:8000/predict)"
+      "Bash(curl -s -X POST -F \"image=@D:/object-detection\\(project\\)/test.jpg\" http://localhost:8000/predict)",
+      "Bash(curl -s https://real-time-object-detection-yolo-qse9.onrender.com/)"
     ]
   }
 }
