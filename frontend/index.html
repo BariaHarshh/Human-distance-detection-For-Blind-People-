@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crowd Monitor - AI Detection System</title>
+    <title>Object Detection - Navigation System for Blind People</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,18 +11,45 @@
     <!-- Header -->
     <header>
         <div class="header-content">
-            <h1>Crowd Monitor</h1>
-            <p class="subtitle">AI-Powered Object Detection for Blind People</p>
+            <h1>Real-Time Object Detection</h1>
+            <p class="subtitle">Navigation System for Blind People</p>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main>
 
-        <!-- Upload Section -->
-        <section class="upload-section">
-            <h2>Upload Image</h2>
-            <p class="upload-hint">Select or drag an image to detect objects and estimate distances</p>
+        <!-- Mode Tabs -->
+        <div class="tabs">
+            <button class="tab active" id="tabCamera" onclick="switchTab('camera')">Live Camera</button>
+            <button class="tab" id="tabUpload" onclick="switchTab('upload')">Upload Image</button>
+        </div>
+
+        <!-- ═══════════════ CAMERA MODE ═══════════════ -->
+        <section class="mode-panel" id="cameraPanel">
+
+            <div class="camera-container">
+                <!-- Live video from webcam -->
+                <video id="webcam" autoplay playsinline muted></video>
+                <!-- Hidden canvas for capturing frames -->
+                <canvas id="captureCanvas" style="display:none;"></canvas>
+                <!-- Canvas overlay for drawing bounding boxes -->
+                <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
+            </div>
+
+            <div class="camera-controls">
+                <button class="btn-primary" id="startBtn" onclick="startCamera()">Start Camera</button>
+                <button class="btn-danger" id="stopBtn" onclick="stopCamera()" style="display:none;">Stop</button>
+                <button class="btn-secondary" id="audioBtn" onclick="toggleAudio()">Audio: ON</button>
+            </div>
+
+            <div class="fps-bar" id="fpsBar">
+                <span>FPS: <strong id="fpsValue">0</strong></span>
+                <span>Latency: <strong id="latencyValue">0</strong>ms</span>
+            </div>
+        </section>
+
+        <!-- ═══════════════ UPLOAD MODE ═══════════════ -->
+        <section class="mode-panel" id="uploadPanel" style="display:none;">
 
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">
@@ -37,49 +64,47 @@
                 <input type="file" id="fileInput" accept="image/*" hidden>
             </div>
 
-            <!-- Image Preview -->
             <div class="preview-container" id="previewContainer" style="display:none;">
-                <img id="previewImage" alt="Uploaded image preview">
+                <img id="previewImage" alt="Preview">
                 <button class="btn-clear" id="clearBtn">Clear</button>
             </div>
 
-            <!-- Detect Button -->
-            <button class="btn-detect" id="detectBtn" disabled>
+            <button class="btn-primary" id="detectBtn" onclick="detectUpload()" disabled>
                 <span id="btnText">Detect Objects</span>
                 <div class="spinner" id="spinner" style="display:none;"></div>
             </button>
         </section>
 
-        <!-- Status -->
+        <!-- ═══════════════ STATUS BAR ═══════════════ -->
         <div class="status-bar" id="statusBar">
-            <span id="statusText">Ready - Upload an image to start</span>
+            <span id="statusText">Ready - Start camera or upload an image</span>
         </div>
 
-        <!-- Results Section -->
+        <!-- ═══════════════ RESULTS ═══════════════ -->
         <section class="results-section" id="resultsSection" style="display:none;">
 
             <!-- Primary Result -->
             <div class="primary-result" id="primaryResult">
                 <div class="result-header">
                     <h3>Closest Object</h3>
-                    <span class="badge" id="distanceBadge"></span>
+                    <span class="badge" id="distanceBadge">-</span>
                 </div>
                 <div class="result-body">
                     <div class="result-item">
                         <span class="result-label">Object</span>
-                        <span class="result-value" id="objectName">-</span>
+                        <span class="result-value" id="resObject">-</span>
                     </div>
                     <div class="result-item">
                         <span class="result-label">Distance</span>
-                        <span class="result-value" id="objectDistance">-</span>
+                        <span class="result-value" id="resDistance">-</span>
                     </div>
                     <div class="result-item">
                         <span class="result-label">Direction</span>
-                        <span class="result-value" id="objectDirection">-</span>
+                        <span class="result-value" id="resDirection">-</span>
                     </div>
                     <div class="result-item">
                         <span class="result-label">Confidence</span>
-                        <span class="result-value" id="objectConfidence">-</span>
+                        <span class="result-value" id="resConfidence">-</span>
                     </div>
                 </div>
             </div>
@@ -88,7 +113,7 @@
             <div class="summary-panel">
                 <div class="summary-item">
                     <span class="summary-number" id="totalObjects">0</span>
-                    <span class="summary-label">Objects Found</span>
+                    <span class="summary-label">Objects</span>
                 </div>
                 <div class="summary-item">
                     <span class="summary-number" id="personCount">0</span>
@@ -100,19 +125,17 @@
                 </div>
             </div>
 
-            <!-- All Objects List -->
+            <!-- All objects list -->
             <div class="all-objects" id="allObjectsPanel" style="display:none;">
                 <h3>All Detected Objects</h3>
                 <div class="objects-list" id="objectsList"></div>
             </div>
 
         </section>
-
     </main>
 
-    <!-- Footer -->
     <footer>
-        <p>Crowd Monitoring & Intruder Detection System &mdash; Built with YOLOv8 + Flask + JavaScript</p>
+        <p>Real-Time Object Detection & Navigation System &mdash; YOLOv8 + Flask + JavaScript</p>
     </footer>
 
     <script src="script.js"></script>

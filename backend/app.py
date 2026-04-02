@@ -1,31 +1,31 @@
 """
-app.py - Flask API for Crowd Monitoring & Intruder Detection
--------------------------------------------------------------
-Endpoint:
-  POST /predict  - Accept an image, return closest object + distance
+app.py - Flask API for Real-Time Object Detection & Navigation
+================================================================
+Endpoints:
+  GET  /           → Health check
+  POST /predict    → Accept image (file upload OR base64), return detections
 
-Designed for deployment on Render (no webcam, no GUI, no pyttsx3).
+Distance calculation uses bbox HEIGHT / frame HEIGHT (more accurate).
+Designed for deployment on Render.
 """
 
-import io
+import base64
 import numpy as np
 import cv2
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from ultralytics import YOLO
 
-# ── App setup ────────────────────────────────────────────────────────────────
+# ── App ──────────────────────────────────────────────────────────────────────
 app = Flask(__name__)
-CORS(app)  # allow frontend on Vercel to call this API
+CORS(app)
 
-# ── Load YOLOv8 model ────────────────────────────────────────────────────────
-# On Render, the model file must be in the same directory or downloaded at build
+# ── Model ────────────────────────────────────────────────────────────────────
 print("[API] Loading YOLOv8 model...")
 model = YOLO("yolov8n.pt")
-print("[API] Model loaded successfully.")
+print("[API] Model loaded.")
 
-# ── Target classes (COCO IDs) ────────────────────────────────────────────────
-# Priority 1 = person/vehicles, 2 = furniture, 3 = small objects
+# ── Target classes ───────────────────────────────────────────────────────────
 TARGET_CLASSES = {
     0:  ("person",     1),
     1:  ("bicycle",    1),
@@ -42,53 +42,40 @@ TARGET_CLASSES = {
 }
 CLASS_IDS = list(TARGET_CLASSES.keys())
 
-# ── Distance zone thresholds ────────────────────────────────────────────────
-# ratio = bounding_box_area / frame_area
+# ── Distance zones (bbox_height / frame_height) ─────────────────────────────
+# height_ratio < 0.15  → far        (~3+ metres)
+# 0.15 – 0.35          → medium     (~1.5–3 metres)
+# 0.35 – 0.60          → near       (~0.5–1.5 metres)
+# 0.60+                → very close (< 0.5 metres)
+
 ZONE_THRESHOLDS = [
-    (0.02, "far"),         # < 2%  → far (~3+ metres)
-    (0.08, "medium"),      # 2-8%  → medium (~1.5-3 metres)
-    (0.20, "near"),        # 8-20% → near (~0.5-1.5 metres)
-    (1.01, "very close"),  # 20%+  → very close (< 0.5 metres)
+    (0.15, "far"),
+    (0.35, "medium"),
+    (0.60, "near"),
+    (1.01, "very close"),
 ]
 
 
-def get_distance_zone(box_area: int, frame_area: int) -> str:
-    """Convert bounding-box/frame area ratio into a distance zone."""
-    ratio = box_area / max(frame_area, 1)
-    for threshold, zone_name in ZONE_THRESHOLDS:
+def get_zone(box_height: int, frame_height: int) -> str:
+    ratio = box_height / max(frame_height, 1)
+    for threshold, zone in ZONE_THRESHOLDS:
         if ratio < threshold:
-            return zone_name
+            return zone
     return "very close"
 
 
 def get_direction(cx: int, frame_w: int) -> str:
-    """Determine if object is left, ahead, or right."""
     if cx < frame_w // 3:
         return "left"
     if cx > (2 * frame_w) // 3:
         return "right"
-    return "ahead"
+    return "center"
 
 
 def detect_objects(image: np.ndarray) -> dict:
-    """
-    Run YOLOv8 on the image and return detection results.
-
-    Returns a dict with:
-      - detected: bool
-      - label: str (name of closest object)
-      - distance: str (zone)
-      - direction: str
-      - confidence: float
-      - object_count: int
-      - person_count: int
-      - is_crowd: bool
-      - all_objects: list of all detections
-    """
+    """Run YOLOv8 on image, return structured detection results."""
     h, w = image.shape[:2]
-    frame_area = h * w
 
-    # Run YOLO inference
     results = model(
         image,
         imgsz=640,
@@ -97,7 +84,6 @@ def detect_objects(image: np.ndarray) -> dict:
         verbose=False,
     )[0]
 
-    # Parse detections
     detections = []
     person_count = 0
 
@@ -108,101 +94,120 @@ def detect_objects(image: np.ndarray) -> dict:
 
         name, priority = TARGET_CLASSES[cls_id]
         x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
-        area = max((x2 - x1) * (y2 - y1), 1)
+        box_h = max(y2 - y1, 1)
         cx = (x1 + x2) // 2
         conf = float(box.conf[0])
 
         if cls_id == 0:
             person_count += 1
 
-        zone = get_distance_zone(area, frame_area)
-        direction = get_direction(cx, w)
-
         detections.append({
-            "label": name,
-            "priority": priority,
-            "distance": zone,
-            "direction": direction,
+            "label":      name,
+            "priority":   priority,
+            "distance":   get_zone(box_h, h),
+            "direction":  get_direction(cx, w),
             "confidence": round(conf, 3),
-            "area": area,
+            "box_h":      box_h,
+            "bbox":       [x1, y1, x2, y2],
         })
 
-    # Sort: highest priority first, then closest (largest area)
-    detections.sort(key=lambda d: (d["priority"], -d["area"]))
+    # Sort: highest priority first, then closest (tallest bbox)
+    detections.sort(key=lambda d: (d["priority"], -d["box_h"]))
 
     if not detections:
         return {
-            "detected": False,
-            "label": None,
-            "distance": None,
-            "direction": None,
-            "confidence": None,
+            "detected":     False,
+            "label":        None,
+            "distance":     None,
+            "direction":    None,
+            "confidence":   None,
             "object_count": 0,
             "person_count": 0,
-            "is_crowd": False,
-            "all_objects": [],
+            "is_crowd":     False,
+            "all_objects":  [],
         }
 
     closest = detections[0]
 
-    # Build all_objects list (without internal fields)
     all_objects = []
     for d in detections:
         all_objects.append({
-            "label": d["label"],
-            "distance": d["distance"],
-            "direction": d["direction"],
+            "label":      d["label"],
+            "distance":   d["distance"],
+            "direction":  d["direction"],
             "confidence": d["confidence"],
+            "bbox":       d["bbox"],
         })
 
     return {
-        "detected": True,
-        "label": closest["label"],
-        "distance": closest["distance"],
-        "direction": closest["direction"],
-        "confidence": closest["confidence"],
+        "detected":     True,
+        "label":        closest["label"],
+        "distance":     closest["distance"],
+        "direction":    closest["direction"],
+        "confidence":   closest["confidence"],
         "object_count": len(detections),
         "person_count": person_count,
-        "is_crowd": person_count >= 3,
-        "all_objects": all_objects,
+        "is_crowd":     person_count >= 3,
+        "all_objects":  all_objects,
     }
+
+
+def decode_image(request_obj) -> np.ndarray:
+    """
+    Decode image from either:
+      1. multipart/form-data  (field: "image")
+      2. JSON body            (field: "image" as base64 data-URL or raw base64)
+    Returns numpy BGR image or None.
+    """
+    # Method 1: File upload
+    if "image" in request_obj.files:
+        file = request_obj.files["image"]
+        if file.filename != "":
+            img_bytes = file.read()
+            np_arr = np.frombuffer(img_bytes, np.uint8)
+            return cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+    # Method 2: Base64 in JSON (used by live camera mode)
+    data = request_obj.get_json(silent=True)
+    if data and "image" in data:
+        b64 = data["image"]
+        # Strip data URL prefix if present: "data:image/jpeg;base64,..."
+        if "," in b64:
+            b64 = b64.split(",", 1)[1]
+        img_bytes = base64.b64decode(b64)
+        np_arr = np.frombuffer(img_bytes, np.uint8)
+        return cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+    return None
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 @app.route("/", methods=["GET"])
 def health():
-    """Health check endpoint."""
-    return jsonify({"status": "ok", "message": "Crowd Monitor API is running"})
+    return jsonify({
+        "status": "ok",
+        "message": "Real-Time Object Detection API is running",
+        "endpoints": {
+            "POST /predict": "Send image (file or base64) to detect objects"
+        }
+    })
 
 
 @app.route("/predict", methods=["POST"])
 def predict():
     """
-    Accept an image and return detection results.
-
-    Expects: multipart/form-data with field "image" containing an image file.
-    Returns: JSON with detection results.
+    Accept image via file upload OR base64 JSON.
+    Returns detection results as JSON.
     """
-    # Check if image was sent
-    if "image" not in request.files:
-        return jsonify({"error": "No image provided. Send an image file with key 'image'."}), 400
-
-    file = request.files["image"]
-
-    if file.filename == "":
-        return jsonify({"error": "Empty filename. Please select an image."}), 400
-
     try:
-        # Read image bytes and decode with OpenCV
-        image_bytes = file.read()
-        np_arr = np.frombuffer(image_bytes, np.uint8)
-        image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        image = decode_image(request)
 
         if image is None:
-            return jsonify({"error": "Could not decode image. Please send a valid image file (JPG/PNG)."}), 400
+            return jsonify({
+                "error": "No valid image provided. Send as file (key: 'image') or JSON {\"image\": \"base64...\"}."
+            }), 400
 
-        # Run detection
         result = detect_objects(image)
         return jsonify(result)
 
