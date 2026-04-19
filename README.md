@@ -18,14 +18,14 @@ A real-time object detection web application designed to assist visually impaire
 ## 📂 Project Structure
 ```
 OBJECT-DETECTION-PROJECT/
-├── backend/                # Production code
+├── backend/                # Production code (API, UI, Weights)
 │   ├── static/             # CSS & JS
 │   ├── templates/          # HTML files
 │   ├── app.py              # Flask API
 │   ├── requirements.txt    # Dependencies
 │   └── yolov8n.pt          # Model weights
-├── docs/                   # Documentation & images
-├── training_and_resources/ # Training scripts & datasets
+├── docs/                   # Documentation & Test scripts
+├── training/               # Training scripts, datasets, and experiments
 ├── render.yaml             # Render deployment config
 └── README.md
 ```
