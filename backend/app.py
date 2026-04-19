@@ -12,6 +12,14 @@ Designed for deployment on Render.
 import base64
 import numpy as np
 import cv2
+import os
+
+# Prevent PyTorch from deadlocking or hanging in Gunicorn (very common issue on CPU servers)
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+import torch
+torch.set_num_threads(1)
+
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from ultralytics import YOLO
