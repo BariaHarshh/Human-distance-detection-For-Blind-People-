@@ -239,6 +239,8 @@ async function sendFrame() {
             setStatus("Backend timeout - Render may be waking up. Try again in 10 seconds.", "error");
         } else if (err.message.includes("Failed to fetch")) {
             setStatus("Waking up backend (Render free tier)... Please wait 30s then try again.", "error");
+        } else {
+            setStatus("Error: " + err.message, "error");
         }
     } finally {
         isSending = false;
