@@ -12,7 +12,7 @@ Designed for deployment on Render.
 import base64
 import numpy as np
 import cv2
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from ultralytics import YOLO
 
@@ -186,14 +186,8 @@ def decode_image(request_obj) -> np.ndarray:
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 @app.route("/", methods=["GET"])
-def health():
-    return jsonify({
-        "status": "ok",
-        "message": "Real-Time Object Detection API is running",
-        "endpoints": {
-            "POST /predict": "Send image (file or base64) to detect objects"
-        }
-    })
+def index():
+    return render_template("index.html")
 
 
 @app.route("/predict", methods=["POST"])

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection - Navigation System for Blind People</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <h1>Real-Time Object Detection</h1>
+            <p class="subtitle">Navigation System for Blind People</p>
+        </div>
+    </header>
+
+    <main>
+
+        <!-- Mode Tabs -->
+        <div class="tabs">
+            <button class="tab active" id="tabCamera" onclick="switchTab('camera')">Live Camera</button>
+            <button class="tab" id="tabUpload" onclick="switchTab('upload')">Upload Image</button>
+        </div>
+
+        <!-- ═══════════════ CAMERA MODE ═══════════════ -->
+        <section class="mode-panel" id="cameraPanel">
+
+            <div class="camera-container">
+                <!-- Live video from webcam -->
+                <video id="webcam" autoplay playsinline muted></video>
+                <!-- Hidden canvas for capturing frames -->
+                <canvas id="captureCanvas" style="display:none;"></canvas>
+                <!-- Canvas overlay for drawing bounding boxes -->
+                <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
+            </div>
+
+            <div class="camera-controls">
+                <button class="btn-primary" id="startBtn" onclick="startCamera()">Start Camera</button>
+                <button class="btn-danger" id="stopBtn" onclick="stopCamera()" style="display:none;">Stop</button>
+                <button class="btn-secondary" id="audioBtn" onclick="toggleAudio()">Audio: ON</button>
+            </div>
+
+            <div class="fps-bar" id="fpsBar">
+                <span>FPS: <strong id="fpsValue">0</strong></span>
+                <span>Latency: <strong id="latencyValue">0</strong>ms</span>
+            </div>
+        </section>
+
+        <!-- ═══════════════ UPLOAD MODE ═══════════════ -->
+        <section class="mode-panel" id="uploadPanel" style="display:none;">
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FFC107" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <p>Click to upload or drag & drop</p>
+                <span class="file-types">JPG, PNG, WEBP</span>
+                <input type="file" id="fileInput" accept="image/*" hidden>
+            </div>
+
+            <div class="preview-container" id="previewContainer" style="display:none;">
+                <img id="previewImage" alt="Preview">
+                <button class="btn-clear" id="clearBtn">Clear</button>
+            </div>
+
+            <button class="btn-primary" id="detectBtn" onclick="detectUpload()" disabled>
+                <span id="btnText">Detect Objects</span>
+                <div class="spinner" id="spinner" style="display:none;"></div>
+            </button>
+        </section>
+
+        <!-- ═══════════════ STATUS BAR ═══════════════ -->
+        <div class="status-bar" id="statusBar">
+            <span id="statusText">Ready - Start camera or upload an image</span>
+        </div>
+
+        <!-- ═══════════════ RESULTS ═══════════════ -->
+        <section class="results-section" id="resultsSection" style="display:none;">
+
+            <!-- Primary Result -->
+            <div class="primary-result" id="primaryResult">
+                <div class="result-header">
+                    <h3>Closest Object</h3>
+                    <span class="badge" id="distanceBadge">-</span>
+                </div>
+                <div class="result-body">
+                    <div class="result-item">
+                        <span class="result-label">Object</span>
+                        <span class="result-value" id="resObject">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Distance</span>
+                        <span class="result-value" id="resDistance">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Direction</span>
+                        <span class="result-value" id="resDirection">-</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Confidence</span>
+                        <span class="result-value" id="resConfidence">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-panel">
+                <div class="summary-item">
+                    <span class="summary-number" id="totalObjects">0</span>
+                    <span class="summary-label">Objects</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-number" id="personCount">0</span>
+                    <span class="summary-label">People</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-number" id="crowdStatus">No</span>
+                    <span class="summary-label">Crowd</span>
+                </div>
+            </div>
+
+            <!-- All objects list -->
+            <div class="all-objects" id="allObjectsPanel" style="display:none;">
+                <h3>All Detected Objects</h3>
+                <div class="objects-list" id="objectsList"></div>
+            </div>
+
+        </section>
+    </main>
+
+    <footer>
+        <p>Real-Time Object Detection & Navigation System &mdash; YOLOv8 + Flask + JavaScript</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
